@@ -29,7 +29,7 @@ void geo_system_process_ins() {
 
     // Mantiene el proceso activo hasta que se reciba un mensaje de finalización
     while (!is_finished)
-        std::this_thread::sleep_for(std::chrono::seconds(1)); // Espera un segundo antes de verificar de nuevo
+        std::this_thread::sleep_for(std::chrono::milliseconds(1)); // Espera un segundo antes de verificar de nuevo
 
     adq_client.disconnect(); // Desconecta el cliente MQTT al finalizar
 }

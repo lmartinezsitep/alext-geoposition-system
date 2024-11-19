@@ -13,9 +13,24 @@ const string& TEST_PERSIST_DIR = "./.work/persist";
 std::chrono::system_clock::time_point parse_time(const std::string& ts) {
     std::istringstream ss(ts);
     std::tm dt = {};
-    ss >> std::get_time(&dt, "%Y-%m-%dT%H:%M:%S");
-    return std::chrono::system_clock::from_time_t(std::mktime(&dt));
+    char dot;
+    double seconds;
+
+    // Parsear hasta los segundos enteros
+    ss >> std::get_time(&dt, "%Y-%m-%dT%H:%M:");
+
+    // Leer la parte de los segundos y decimales
+    if (ss >> seconds) {
+        // Convertir a time_t
+        std::time_t time = std::mktime(&dt);
+
+        // Crear un time_point y añadir los segundos decimales
+        return std::chrono::system_clock::from_time_t(time) + std::chrono::duration_cast<std::chrono::system_clock::duration>(std::chrono::duration<double>(seconds));
+    } else {
+        throw std::runtime_error("Formato de tiempo no válido");
+    }
 }
+
 
 // Función para leer datos INS desde un archivo y publicarlos
 void geo_system_read_ins(const std::string& ins_filename) {
@@ -33,6 +48,7 @@ void geo_system_read_ins(const std::string& ins_filename) {
     bool is_first = true;
     auto start_time = std::chrono::system_clock::now();
     auto first_time = std::chrono::system_clock::now();
+       
     std::string line;
     while (std::getline(file, line)) { // Lee el archivo línea por línea
 //
@@ -48,9 +64,12 @@ void geo_system_read_ins(const std::string& ins_filename) {
 
         while (true) {
             auto current_time = std::chrono::system_clock::now();
+
             if (current_time -  start_time >= message_time - first_time) {
+                std::cerr << "break: " << std::endl;
                 break;
             }
+            // std::cerr << "sleep: " << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
         std::cout << "sitep INS data: " << line << std::endl;
@@ -78,9 +97,35 @@ void geo_system_read_gnss(const std::string& gns_filename) {
     connOptsServer.cleanStart = true;
     geo_client.connect(connOptsServer); // Conecta al broker MQTT
 
+    bool is_first = true;
+    auto start_time = std::chrono::system_clock::now();
+    auto first_time = std::chrono::system_clock::now();
+
     std::string line;
     // Lee el archivo línea por línea
     while (std::getline(file, line)) {
+
+        // Parsear JSON
+        auto json_object = json::parse(line);
+        std::string ts = json_object.at("ts");
+        auto message_time = parse_time(ts);
+        
+        if (is_first) {
+            first_time = message_time;
+            is_first = false;
+        }
+
+        while (true) {
+            auto current_time = std::chrono::system_clock::now();
+
+            if (current_time -  start_time >= message_time - first_time) {
+                std::cerr << "break: " << std::endl;
+                break;
+            }
+            // std::cerr << "sleep: " << std::endl;
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
+
         std::cout << "sitep GNSS data: " << line << std::endl;
         geo_client.publishAdquisitionGNSSData(line.c_str()); // Publica cada línea leída
     }
@@ -110,15 +155,15 @@ int main(int argc, char* argv[]) {
 
     // Crea hilos para leer los sistemas INS y GNSS, pasando los nombres de archivo
     std::thread geo_system_read_ins_thread(geo_system_read_ins, ins_filename);
-    // std::thread geo_system_read_gnss_thread(geo_system_read_gnss, gnss_filename);
+    std::thread geo_system_read_gnss_thread(geo_system_read_gnss, gnss_filename);
 
     // Une los hilos antes de finalizar el programa
     if (geo_system_read_ins_thread.joinable()) {
         geo_system_read_ins_thread.join();
     }
-    // if (geo_system_read_gnss_thread.joinable()) {
-    //     geo_system_read_gnss_thread.join();
-    // }
+    if (geo_system_read_gnss_thread.joinable()) {
+        geo_system_read_gnss_thread.join();
+    }
 
     return 0;
 }
