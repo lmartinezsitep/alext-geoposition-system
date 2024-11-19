@@ -1,28 +1,23 @@
 #include "sitep.h"
 
+using json = nlohmann::json; // JSON library
 using namespace alexTMqtt;
 
 // Constante que representa el desfase actual entre UTC y GPS en segundos
 const int GPS_UTC_OFFSET = 18; // Este valor puede cambiar con nuevos segundos intercalares
 const int BUFFER_SIZE = 65536;
 
-
 const string& TEST_BROKER_URI = "mqtt://mosquitto:1883";
 const string& TEST_PERSIST_DIR = "./.work/persist";
 
+std::chrono::system_clock::time_point parse_time(const std::string& ts) {
+    std::istringstream ss(ts);
+    std::tm dt = {};
+    ss >> std::get_time(&dt, "%Y-%m-%dT%H:%M:%S");
+    return std::chrono::system_clock::from_time_t(std::mktime(&dt));
+}
 
-// void executePythonScript_ins(const std::string& ins_filename) {
-
-//     std::array<char, BUFFER_SIZE> buffer;
-//     while (fgets(buffer.data(), buffer.size(), pipe.get()) != nullptr) {
-//         std::cout << "sitep INS data: " << buffer.data();
-//         geo_client.publishAdquisitionINSData(buffer.data());  
-//     }
-// 	geo_client.publishAdquisitionINSData("FINISH");
-//     geo_client.disconnect();
-// }
-
-
+// Función para leer datos INS desde un archivo y publicarlos
 void geo_system_read_ins(const std::string& ins_filename) {
     std::ifstream file(ins_filename); // Abre el archivo para lectura
     if (!file.is_open()) {
@@ -35,8 +30,29 @@ void geo_system_read_ins(const std::string& ins_filename) {
 	connOptsServer.cleanStart = true;
     geo_client.connect(connOptsServer);
 
+    bool is_first = true;
+    auto start_time = std::chrono::system_clock::now();
+    auto first_time = std::chrono::system_clock::now();
     std::string line;
     while (std::getline(file, line)) { // Lee el archivo línea por línea
+//
+        // Parsear JSON
+        auto json_object = json::parse(line);
+        std::string ts = json_object.at("ts");
+        auto message_time = parse_time(ts);
+        
+        if (is_first) {
+            first_time = message_time;
+            is_first = false;
+        }
+
+        while (true) {
+            auto current_time = std::chrono::system_clock::now();
+            if (current_time -  start_time >= message_time - first_time) {
+                break;
+            }
+            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+        }
         std::cout << "sitep INS data: " << line << std::endl;
         geo_client.publishAdquisitionINSData(line.c_str()); // Publica cada línea leída
     }
@@ -94,15 +110,15 @@ int main(int argc, char* argv[]) {
 
     // Crea hilos para leer los sistemas INS y GNSS, pasando los nombres de archivo
     std::thread geo_system_read_ins_thread(geo_system_read_ins, ins_filename);
-    std::thread geo_system_read_gnss_thread(geo_system_read_gnss, gnss_filename);
+    // std::thread geo_system_read_gnss_thread(geo_system_read_gnss, gnss_filename);
 
     // Une los hilos antes de finalizar el programa
     if (geo_system_read_ins_thread.joinable()) {
         geo_system_read_ins_thread.join();
     }
-    if (geo_system_read_gnss_thread.joinable()) {
-        geo_system_read_gnss_thread.join();
-    }
+    // if (geo_system_read_gnss_thread.joinable()) {
+    //     geo_system_read_gnss_thread.join();
+    // }
 
     return 0;
 }
