@@ -122,7 +122,7 @@ void geo_system_read_gnss(const std::string& gns_filename) {
                 std::cerr << "break: " << std::endl;
                 break;
             }
-            // std::cerr << "sleep: " << std::endl;
+            std::cerr << "sleep: " << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
@@ -135,6 +135,30 @@ void geo_system_read_gnss(const std::string& gns_filename) {
 }
 
 
+void geo_system_read_nexa(){
+
+   	GeopositionMqttClient geo_client = GeopositionMqttClient("NEXA", TEST_BROKER_URI, TEST_PERSIST_DIR);
+	ClientConnectOptions connOptsServer;
+	connOptsServer.cleanStart = true;
+    geo_client.connect(connOptsServer);
+
+    bool is_finished = false;
+
+	geo_client.subscribeToGeopositionData([&](const string& message) {
+		std::cout << "sitep read NEXA :" << message << std::endl;
+		{
+			if (message == "FINISH") {
+				is_finished = true;
+			}
+		}
+		});
+
+	while (!is_finished) {
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+	geo_client.disconnect();
+
+}
 
 int main(int argc, char* argv[]) {
     // Nombres de archivo predeterminados
@@ -156,6 +180,7 @@ int main(int argc, char* argv[]) {
     // Crea hilos para leer los sistemas INS y GNSS, pasando los nombres de archivo
     std::thread geo_system_read_ins_thread(geo_system_read_ins, ins_filename);
     std::thread geo_system_read_gnss_thread(geo_system_read_gnss, gnss_filename);
+    std::thread geo_system_read_nexa_thread(geo_system_read_nexa);
 
     // Une los hilos antes de finalizar el programa
     if (geo_system_read_ins_thread.joinable()) {
@@ -164,6 +189,8 @@ int main(int argc, char* argv[]) {
     if (geo_system_read_gnss_thread.joinable()) {
         geo_system_read_gnss_thread.join();
     }
-
+    if (geo_system_read_nexa_thread.joinable()) {
+		geo_system_read_nexa_thread.join();
+    }
     return 0;
 }

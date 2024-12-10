@@ -5,6 +5,7 @@ using namespace alexTMqtt; // Broker MQTT
 
 const string& TEST_BROKER_URI = "mqtt://mosquitto:1883";
 const string& TEST_PERSIST_DIR = "./.work/persist";
+
 const string& GNSS_BINARY_FILE = "gonumerics_gnss.bin";
 
 void geo_system_process_ins() {
@@ -115,7 +116,26 @@ void geo_system_process_gnss() {
     fclose(gnss_binary_file_ptr); // Cierra el archivo binario
 }
 
+void geo_system_write_nexa(){
+	AdquisitionMqttClient adq_client = AdquisitionMqttClient("NEXA", TEST_BROKER_URI, TEST_PERSIST_DIR);
+	ClientConnectOptions connOptsServer;
+	connOptsServer.cleanStart = true;
+    adq_client.connect(connOptsServer);
 
+	while (42){
+		auto t = std::time(nullptr);
+    	auto tm = *std::localtime(&t);
+    	std::ostringstream oss;
+    	oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
+    	std::string current_date_time = oss.str();
+
+		adq_client.publishGeopositionData("NEXA" + current_date_time);
+		std::this_thread::sleep_for(std::chrono::seconds(1));
+	}
+
+	adq_client.disconnect();
+
+}
 
 int main() {
     // Crea un hilo para ejecutar la función geo_system_process_ins
@@ -123,6 +143,10 @@ int main() {
 
     // Crea otro hilo para ejecutar la función geo_system_process_gnss
     std::thread geo_system_process_gnss_thread(geo_system_process_gnss);
+
+    // Crea un hilo para ejecutar la función geo_system_write_nexa
+    std::thread geo_system_write_nexa_thread(geo_system_write_nexa);
+
 
     // Verifica si el hilo geo_system_process_ins_thread se puede unir y lo une
     if (geo_system_process_ins_thread.joinable()) {
@@ -133,5 +157,10 @@ int main() {
     if (geo_system_process_gnss_thread.joinable()) {
         geo_system_process_gnss_thread.join(); // Espera a que el hilo termine su ejecución
     }
+    
+    // Verifica si el hilo geo_system_write_nexa_thread se puede unir y lo une
+    if (geo_system_write_nexa_thread.joinable()) {
+		geo_system_write_nexa_thread.join();
+	}
 }
 
