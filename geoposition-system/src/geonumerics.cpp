@@ -129,7 +129,7 @@ void geo_system_write_nexa(){
     	oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
     	std::string current_date_time = oss.str();
 
-		adq_client.publishGeopositionData("NEXA" + current_date_time);
+		adq_client.publishGeopositionData(" NEXA " + current_date_time);
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 

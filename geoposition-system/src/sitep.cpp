@@ -66,13 +66,13 @@ void geo_system_read_ins(const std::string& ins_filename) {
             auto current_time = std::chrono::system_clock::now();
 
             if (current_time -  start_time >= message_time - first_time) {
-                std::cerr << "break: " << std::endl;
+                // std::cerr << "break: " << std::endl;
                 break;
             }
             // std::cerr << "sleep: " << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
-        std::cout << "sitep INS data: " << line << std::endl;
+    //    std::cout << "sitep INS data: " << line << std::endl;
         geo_client.publishAdquisitionINSData(line.c_str()); // Publica cada línea leída
     }
 
@@ -119,14 +119,14 @@ void geo_system_read_gnss(const std::string& gns_filename) {
             auto current_time = std::chrono::system_clock::now();
 
             if (current_time -  start_time >= message_time - first_time) {
-                std::cerr << "break: " << std::endl;
+                // std::cerr << "break: " << std::endl;
                 break;
             }
-            std::cerr << "sleep: " << std::endl;
+            // std::cerr << "sleep: " << std::endl;
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
         }
 
-        std::cout << "sitep GNSS data: " << line << std::endl;
+    //    std::cout << "sitep GNSS data: " << line << std::endl;
         geo_client.publishAdquisitionGNSSData(line.c_str()); // Publica cada línea leída
     }
 
