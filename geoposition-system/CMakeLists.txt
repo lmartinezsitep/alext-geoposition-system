@@ -42,6 +42,7 @@ ENDIF()
 
 find_package(OpenSSL REQUIRED)
 
+
 include_directories(${CMAKE_SOURCE_DIR}/external/AlexTMqtt/include ${CMAKE_SOURCE_DIR}/external/PahoMqttCpp/include ${OPENSSL_INCLUDE_DIR})
 
 link_directories(${CMAKE_SOURCE_DIR}/external/AlexTMqtt/lib ${CMAKE_SOURCE_DIR}/external/PahoMqttCpp/lib)
