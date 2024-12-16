@@ -7,8 +7,14 @@ using namespace alexTMqtt;
 const int GPS_UTC_OFFSET = 18; // Este valor puede cambiar con nuevos segundos intercalares
 const int BUFFER_SIZE = 65536;
 
-const string& TEST_BROKER_URI = "mqtt://mosquitto:1883";
-const string& TEST_PERSIST_DIR = "./.work/persist";
+// uncomment to use from Docker
+// const string& TEST_BROKER_URI = "mqtt://mosquitto:1883";
+// const string& TEST_PERSIST_DIR = "./.work/persist";
+
+// comment to use from Docker
+const string& TEST_BROKER_URI = "mqtt://localhost:1884";
+const string& TEST_PERSIST_DIR = "/tmp/persist/";
+
 
 std::chrono::system_clock::time_point parse_time(const std::string& ts) {
     std::istringstream ss(ts);

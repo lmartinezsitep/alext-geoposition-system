@@ -3,8 +3,13 @@
 using json = nlohmann::json; // JSON library
 using namespace alexTMqtt; // Broker MQTT
 
-const string& TEST_BROKER_URI = "mqtt://mosquitto:1883";
-const string& TEST_PERSIST_DIR = "./.work/persist";
+// uncomment to use from Docker
+// const string& TEST_BROKER_URI = "mqtt://mosquitto:1883";
+// const string& TEST_PERSIST_DIR = "./.work/persist";
+
+// comment to use from Docker
+const string& TEST_BROKER_URI = "mqtt://localhost:1884";
+const string& TEST_PERSIST_DIR = "/tmp/persist/";
 
 const string& GNSS_BINARY_FILE = "gonumerics_gnss.bin";
 

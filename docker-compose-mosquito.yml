@@ -1,0 +1,41 @@
+services:
+  mosquitto:
+    build: ./mosquitto
+    container_name: geoposition-system-mosquitto
+    environment:
+      ENV: ${ENV}
+      TZ: Europe/Madrid
+    ports:
+      - "1884:1883"
+      - "8884:8883"
+      - "9002:9001"
+    volumes:
+      - mosquitto_data:/mosquitto/data
+    restart: unless-stopped
+
+  # geoposition-system-arm32:
+  #   privileged: true # Permet l'accés a dispositius de baix nivell
+  #   # devices:
+  #   #   - "/dev/spidev0.0:/dev/spidev0.0" # Monta el dispositiu SPI al contenidor dev/spidevX.Y, on X es el bus i Y el dispositiu
+  #   build:
+  #     context: ./geoposition-system
+  #     dockerfile: Dockerfile.arm32
+  #   container_name: geoposition-system-arm32
+  #   ports:
+  #     - "2222:22"
+  #   volumes:
+  #     - "./geoposition-system:/geoposition-system"
+  #     # - "certs_data:/etc/ssl/certs"
+  #   environment:
+  #     ENV: ${ENV}
+  #     TZ: Europe/Madrid
+
+# Important: don't use '-' character in the volume name
+volumes:
+  mosquitto_data:
+  certs_data:
+    driver: local
+    driver_opts:
+      type: none
+      o: bind
+      device: /etc/ssl/certs
