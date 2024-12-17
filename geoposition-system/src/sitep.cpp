@@ -46,7 +46,7 @@ void geo_system_read_ins(const std::string& ins_filename) {
         return;
     }
 
-	GeopositionMqttClient geo_client = GeopositionMqttClient("INS", TEST_BROKER_URI, TEST_PERSIST_DIR);
+	GeopositionMqttClient geo_client = GeopositionMqttClient("geo_INS", TEST_BROKER_URI, TEST_PERSIST_DIR);
 	ClientConnectOptions connOptsServer;
 	connOptsServer.cleanStart = true;
     geo_client.connect(connOptsServer);
@@ -96,7 +96,7 @@ void geo_system_read_gnss(const std::string& gns_filename) {
     }
 
     // Crea un cliente MQTT para la publicación de datos GNSS
-    GeopositionMqttClient geo_client = GeopositionMqttClient("GNSS", TEST_BROKER_URI, TEST_PERSIST_DIR);
+    GeopositionMqttClient geo_client = GeopositionMqttClient("geo_GNSS", TEST_BROKER_URI, TEST_PERSIST_DIR);
     
     // Configura las opciones de conexión del cliente
     ClientConnectOptions connOptsServer;
@@ -143,7 +143,7 @@ void geo_system_read_gnss(const std::string& gns_filename) {
 
 void geo_system_read_nexa(){
 
-   	GeopositionMqttClient geo_client = GeopositionMqttClient("NEXA", TEST_BROKER_URI, TEST_PERSIST_DIR);
+   	GeopositionMqttClient geo_client = GeopositionMqttClient("geo_NEXA", TEST_BROKER_URI, TEST_PERSIST_DIR);
 	ClientConnectOptions connOptsServer;
 	connOptsServer.cleanStart = true;
     geo_client.connect(connOptsServer);

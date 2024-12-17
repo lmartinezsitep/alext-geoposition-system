@@ -8,14 +8,15 @@ using namespace alexTMqtt; // Broker MQTT
 // const string& TEST_PERSIST_DIR = "./.work/persist";
 
 // comment to use from Docker
-const string& TEST_BROKER_URI = "mqtt://localhost:1884";
+// const string& TEST_BROKER_URI = "mqtt://localhost:1884";
+const string& TEST_BROKER_URI = "mqtt://192.168.42.4:1884";
 const string& TEST_PERSIST_DIR = "/tmp/persist/";
 
-const string& GNSS_BINARY_FILE = "gonumerics_gnss.bin";
+// const string& GNSS_BINARY_FILE = "gonumerics_gnss.bin";
 
 void geo_system_process_ins() {
     // Crea un cliente MQTT para la adquisición de datos INS
-    AdquisitionMqttClient adq_client = AdquisitionMqttClient("INS", TEST_BROKER_URI, TEST_PERSIST_DIR);
+    AdquisitionMqttClient adq_client = AdquisitionMqttClient("geo_INS", TEST_BROKER_URI, TEST_PERSIST_DIR);
     
     // Configura las opciones de conexión del cliente
     ClientConnectOptions connOptsServer;
@@ -78,19 +79,19 @@ std::string stringToHex(const std::string& input) {
 
 void geo_system_process_gnss() {
     // Crea un cliente MQTT para la adquisición de datos GNSS
-    AdquisitionMqttClient adq_client = AdquisitionMqttClient("GNSS", TEST_BROKER_URI, TEST_PERSIST_DIR);
+    AdquisitionMqttClient adq_client = AdquisitionMqttClient("geo_GNSS", TEST_BROKER_URI, TEST_PERSIST_DIR);
     
     // Configura las opciones de conexión del cliente
     ClientConnectOptions connOptsServer;
     connOptsServer.cleanStart = true;
     adq_client.connect(connOptsServer); // Conecta al broker MQTT
 
-    // Abre un archivo binario para escribir los datos GNSS
-    FILE *gnss_binary_file_ptr = fopen(GNSS_BINARY_FILE.c_str(), "wb");
-    if (gnss_binary_file_ptr == nullptr) {
-        std::cerr << "Error al abrir el archivo binario gnss" << std::endl;
-        return; // Sale de la función si no se puede abrir el archivo
-    }
+    // // Abre un archivo binario para escribir los datos GNSS
+    // FILE *gnss_binary_file_ptr = fopen(GNSS_BINARY_FILE.c_str(), "wb");
+    // if (gnss_binary_file_ptr == nullptr) {
+    //     std::cerr << "Error al abrir el archivo binario gnss" << std::endl;
+    //     return; // Sale de la función si no se puede abrir el archivo
+    // }
 
     bool is_finished = false; // Bandera para indicar cuando finalizar el proceso
 
@@ -98,15 +99,15 @@ void geo_system_process_gnss() {
     adq_client.subscribeToAdquisitionGNSSData([&](const string& message) {
         std::cout << "geonumerics Adq GNSS: " << message << std::endl;
 
-        try {
-            // Intenta parsear el mensaje JSON recibido
-            json j = json::parse(message.c_str());
-            std::string body = j["Message"];
-            std::string bin  = hexStringToBinary(body); // Convierte el mensaje hexadecimal a binario
-            fwrite(bin.c_str(), sizeof(char), bin.size(), gnss_binary_file_ptr); // Escribe los datos binarios en el archivo
-        } catch (const std::exception& e) {
-            std::cerr << "Error: " << e.what() << std::endl; // Muestra cualquier error de parsing
-        }
+        // try {
+        //     // Intenta parsear el mensaje JSON recibido
+        //     json j = json::parse(message.c_str());
+        //     std::string body = j["Message"];
+        //     std::string bin  = hexStringToBinary(body); // Convierte el mensaje hexadecimal a binario
+        //     fwrite(bin.c_str(), sizeof(char), bin.size(), gnss_binary_file_ptr); // Escribe los datos binarios en el archivo
+        // } catch (const std::exception& e) {
+        //     std::cerr << "Error: " << e.what() << std::endl; // Muestra cualquier error de parsing
+        // }
 
         // Verifica si el mensaje indica que debe finalizar
         if (message == "FINISH")
@@ -118,11 +119,11 @@ void geo_system_process_gnss() {
         std::this_thread::sleep_for(std::chrono::seconds(1)); // Espera 1 segundo antes de verificar nuevamente
     
     adq_client.disconnect(); // Desconecta del broker MQTT
-    fclose(gnss_binary_file_ptr); // Cierra el archivo binario
+    // fclose(gnss_binary_file_ptr); // Cierra el archivo binario
 }
 
 void geo_system_write_nexa(){
-	AdquisitionMqttClient adq_client = AdquisitionMqttClient("NEXA", TEST_BROKER_URI, TEST_PERSIST_DIR);
+	AdquisitionMqttClient adq_client = AdquisitionMqttClient(" geoposition NEXA", TEST_BROKER_URI, TEST_PERSIST_DIR);
 	ClientConnectOptions connOptsServer;
 	connOptsServer.cleanStart = true;
     adq_client.connect(connOptsServer);
@@ -134,7 +135,7 @@ void geo_system_write_nexa(){
     	oss << std::put_time(&tm, "%Y-%m-%d %H:%M:%S");
     	std::string current_date_time = oss.str();
 
-		adq_client.publishGeopositionData(" NEXA " + current_date_time);
+		adq_client.publishGeopositionData(" geo NEXA " + current_date_time);
 		std::this_thread::sleep_for(std::chrono::seconds(1));
 	}
 
